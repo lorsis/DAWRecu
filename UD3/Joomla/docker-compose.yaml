@@ -1,0 +1,55 @@
+version: '3.8'
+
+services:
+  # Contenidor per a MySQL
+  db:
+    image: mysql:5.7
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: proves_lorena
+      MYSQL_USER: user
+      MYSQL_PASSWORD: password
+    ports:
+      - "3306:3306"
+    volumes:
+      - db_data:/var/lib/mysql
+      - ./initdb:/docker-entrypoint-initdb.d 
+    restart: always
+    networks:
+      - app_network
+
+  # Contenidor per a Apache i PHP (amb build propi)
+  web:
+    build: ./web
+    ports:
+      - "8080:80"
+    volumes:
+      - ./web:/var/www/html
+      - ./sites-available/000-default.conf:/etc/apache2/sites-available/000-default.conf
+
+    depends_on:
+      - db
+    restart: always
+    networks:
+      - app_network
+
+  # Contenidor per a phpMyAdmin
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    environment:
+      PMA_HOST: db
+      PMA_USER: user
+      PMA_PASSWORD: password
+    ports:
+      - "8081:80"
+    restart: always
+    networks:
+      - app_network
+
+volumes:
+  db_data:
+
+networks:
+  app_network:
+    driver: bridge
+
